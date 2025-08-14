@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>TM Image Classifier</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest"></script>
+</head>
+<body>
+  <div>이미지 분류 결과:</div>
+  <div id="label-container"></div>
+  <script type="text/javascript">
+    const URL = "https://teachablemachine.withgoogle.com/models/XSWjPxL_c/model.json";
+    let model, webcam, labelContainer, maxPredictions;
+
+    async function init() {
+        const modelURL = URL + "model.json";
+        const metadataURL = URL + "metadata.json";
+
+        model = await tmImage.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+
+        const flip = true;
+        webcam = new tmImage.Webcam(200, 200, flip);
+        await webcam.setup();
+        await webcam.play();
+        window.requestAnimationFrame(loop);
+
+        document.body.appendChild(webcam.canvas);
+        labelContainer = document.getElementById("label-container");
+    }
+
+    async function loop() {
+        webcam.update();
+        await predict();
+        window.requestAnimationFrame(loop);
+    }
+
+    async function predict() {
+        const prediction = await model.predict(webcam.canvas);
+        let text = "";
+        for (let i = 0; i < maxPredictions; i++) {
+            text += prediction[i].className + ": " + (prediction[i].probability * 100).toFixed(2) + "%<br>";
+        }
+        labelContainer.innerHTML = text;
+        // 앱 인벤터에서 받으려면 ↓
+        document.title = prediction[0].className;
+    }
+
+    init();
+  </script>
+</body>
+</html>
